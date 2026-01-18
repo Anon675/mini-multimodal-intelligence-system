@@ -1,6 +1,8 @@
+from typing import List, Dict, Any
+
 import torch
+import numpy as np
 from ultralytics import YOLO
-from typing import List, Dict
 
 from config.settings import (
     YOLO_MODEL_NAME,
@@ -10,63 +12,70 @@ from config.settings import (
 )
 from utils.logger import get_logger
 
-logger = get_logger("yolo_detector")
-
 
 class YoloObjectDetector:
-    def __init__(self):
-        logger.info(f"Loading YOLO model: {YOLO_MODEL_NAME}")
+    """
+    Robust, class-agnostic object detector.
 
-        self.device = "cuda" if (USE_GPU_IF_AVAILABLE and torch.cuda.is_available()) else "cpu"
+    Design principles:
+    - No hardcoded allowed classes
+    - No manual relabeling
+    - Trust YOLO's native taxonomy
+    - Only gate by confidence + IoU
+    """
+
+    def __init__(self):
+        self.logger = get_logger("yolo_detector")
+
+        self.logger.info(f"Loading YOLO model: {YOLO_MODEL_NAME}")
         self.model = YOLO(YOLO_MODEL_NAME)
 
-        # Move model to device if supported
-        try:
-            self.model.to(self.device)
-        except Exception:
-            logger.warning("Could not explicitly move YOLO to device; continuing with default.")
+        # Device selection
+        if USE_GPU_IF_AVAILABLE and torch.cuda.is_available():
+            self.device = "cuda"
+        else:
+            self.device = "cpu"
 
-        logger.info(f"YOLO running on: {self.device}")
+        self.model.to(self.device)
+        self.logger.info(f"YOLO running on: {self.device}")
 
-    def detect(self, image_bgr) -> List[Dict]:
+        # Cache class names from the model itself
+        self.class_names = getattr(self.model, "names", {})
+
+    def detect(self, image_bgr: np.ndarray) -> List[Dict[str, Any]]:
         """
-        Run object detection and return structured results.
-        Each object contains: name, confidence, bbox.
+        Run YOLO detection and return native labels.
+        No manual class constraints.
         """
 
         results = self.model.predict(
-            source=image_bgr,
+            image_bgr,
             conf=YOLO_CONF_THRESHOLD,
             iou=YOLO_IOU_THRESHOLD,
             verbose=False,
-        )
+            device=self.device,
+        )[0]
 
-        detections = []
+        detections: List[Dict[str, Any]] = []
 
-        if len(results) == 0:
+        if not hasattr(results, "boxes") or results.boxes is None:
             return detections
 
-        r = results[0]
+        boxes = results.boxes.xyxy.cpu().numpy()
+        scores = results.boxes.conf.cpu().numpy()
+        class_ids = results.boxes.cls.cpu().numpy()
 
-        boxes = r.boxes
-        if boxes is None:
-            return detections
+        for box, score, cid in zip(boxes, scores, class_ids):
+            x1, y1, x2, y2 = map(int, box)
 
-        for i in range(len(boxes)):
-            cls_id = int(boxes.cls[i])
-            conf = float(boxes.conf[i])
-            x1, y1, x2, y2 = map(float, boxes.xyxy[i])
+            label = self.class_names.get(int(cid), f"class_{int(cid)}")
 
-            detections.append({
-                "label": r.names[cls_id],
-                "confidence": round(conf, 4),
-                "bbox": {
-                    "x1": round(x1, 2),
-                    "y1": round(y1, 2),
-                    "x2": round(x2, 2),
-                    "y2": round(y2, 2),
+            detections.append(
+                {
+                    "label": label,
+                    "confidence": float(score),
+                    "bbox": [x1, y1, x2, y2],
                 }
-            })
+            )
 
-        logger.debug(f"Detected {len(detections)} objects")
         return detections

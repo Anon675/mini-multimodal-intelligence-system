@@ -1,132 +1,100 @@
+# Mini Multimodal Intelligence System
 
-The LLM **never sees the image**. It reasons only over extracted features, which reduces hallucination risk and increases interpretability.
+A lightweight, offline, **multimodal image reasoning pipeline** that separates perception from reasoning, treats the LLM as a secondary component rather than a decision oracle, and explicitly handles model failure instead of hiding it.
 
----
-
-## System Architecture
-
-### 1) Vision Feature Extraction Layer (Pre-LLM)
-
-| Component | Model | Role in System |
-|-----------|--------|----------------|
-| Object Detection | **YOLOv8n** | Detects semantic entities in the scene (e.g., “shoe”, “person”, “table”). Provides context rather than final decisions. |
-| Image Embeddings | **CLIP ViT-B/32** | Encodes high-level visual semantics into a dense vector. Stored for explainability and potential retrieval use. |
-| OCR | **Tesseract** | Extracts visible text, logos, or branding that may influence professionalism or trust. |
-| Quality Metrics | Custom OpenCV pipeline | Measures blur, brightness, and contrast to quantify technical image suitability. |
-
-These signals are **ground truth measurements**, not LLM interpretations.
+This project was built for an ML engineering assessment that emphasizes **model understanding, system design, and engineering judgment — not prompt writing.**
 
 ---
 
-### 2) Feature Processing Layer  
+## 🎯 What this system does
 
-Raw model outputs are normalized and summarized into clean signals:
+Given an input image, the pipeline:
 
-- **Object summarization:** deduplicated labels only  
-- **Text normalization:** noise removal and case normalization  
-- **Image quality assessment:**  
-  - Variance of Laplacian → blur  
-  - Mean intensity → brightness  
-  - Standard deviation → contrast  
+1. **Perception layer (true ML work)**
+   - Detects objects using **YOLOv8**
+   - Extracts text using **Tesseract OCR**
+   - Computes image quality metrics:
+     - blur variance  
+     - brightness  
+     - contrast  
+     - composite quality score  
 
-The system converts numeric values into interpretable issues such as:
-- `"blurred"`
-- `"too_dark"`
-- `"low_contrast"`
+2. **Reasoning layer (local LLM)**
+   - Sends **structured features (not raw images)** to a local LLM  
+   - The LLM is asked to reason in strict JSON format  
+   - Output is validated against a schema  
 
----
+3. **Reliability layer (engineering judgment)**
+   - If the LLM returns malformed text (which often happens), the system:
+     - detects the failure,
+     - logs it explicitly (`"llm_format_error"`), and  
+     - falls back to a **vision-based decision** instead of hallucinating.
 
-### 3) Local LLM Reasoning Layer  
-
-- Model: **`google/flan-t5-small`** (fully local, CPU-friendly)  
-- Input: structured features only  
-- Tasks:
-  1. Judge suitability for professional e-commerce use  
-  2. List concrete issues  
-  3. Provide a concise reasoning summary  
-  4. Output a binary verdict (`Suitable` / `Not suitable`)  
-  5. Estimate confidence in [0,1]
-
-The response is constrained to **valid JSON**, ensuring downstream usability.
-
----
-
-### 4) Inference Orchestration  
-
-The `InferencePipeline` class coordinates:
-
-1. Image loading  
-2. Parallel feature extraction  
-3. Structured signal assembly  
-4. LLM reasoning  
-5. Result aggregation  
-
-Each image produces one independent JSON file in `data/outputs/`.
+4. **Final structured output**
+   - Always returns valid JSON with:
+     - image_quality_score  
+     - detected_objects  
+     - text_detected  
+     - issues_detected  
+     - llm_reasoning_summary  
+     - final_verdict  
+     - confidence  
 
 ---
 
-## Sample Output Schema  
+## 🧠 Design philosophy (why this matters)
 
-```json
-{
-  "image_quality_score": 0.74,
-  "issues_detected": ["blurred", "too_dark"],
-  "detected_objects": ["shoe", "hand"],
-  "text_detected": [],
-  "llm_reasoning_summary": "The image appears informal with poor lighting...",
-  "final_verdict": "Not suitable",
-  "confidence": 0.82
-}
+This project is **not**:
 
-Models Used
-| Task       | Model         | Justification                            |
-| ---------- | ------------- | ---------------------------------------- |
-| Detection  | YOLOv8n       | Fast, lightweight, strong generalization |
-| Embeddings | CLIP ViT-B/32 | Standard multimodal representation       |
-| OCR        | Tesseract     | Reliable baseline for text extraction    |
-| LLM        | flan-t5-small | Practical for local inference on CPU     |
+- a single GPT API call  
+- a prompt-only solution  
+- a notebook demo  
+- or an image → text wrapper  
 
+It is designed as a **real ML system** where:
 
-Running The Sysytem
+- Vision models do perception.  
+- The LLM only reasons over structured signals.  
+- The system assumes the LLM is unreliable.  
+- Decisions remain explainable and deterministic.
 
-python -m venv venv
-venv\Scripts\activate   # Windows
-pip install -r requirements.txt
+This reflects how real-world ML systems are built in production.
 
+---
 
-Engineering Trade-offs
+## 🔧 Why a **local LLM** instead of an API?
 
-| Choice                         | Rationale                                    |
-| ------------------------------ | -------------------------------------------- |
-| YOLOv8n over larger detectors  | Prioritized speed and local usability        |
-| CLIP embeddings retained       | Enables future retrieval or similarity tasks |
-| flan-t5-small over larger LLMs | Feasible local execution without GPUs        |
-| Structured JSON output         | Reliability over free-form text              |
+We deliberately used a **local model (`google/flan-t5-base`)** because:
 
+1. **Offline execution**
+   - No internet required  
+   - No API keys  
+   - Fully reproducible  
 
-Limitations
-1.Local LLM reasoning depth
+2. **Engineering realism**
+   - Many companies cannot send images or data to external APIs due to privacy.  
+   - Using a local model shows system design, not dependency on a black box.
 
-  flan-t5-small is weaker than GPT-class models
-  Future work: upgrade to flan-t5-base or add schema validation + retries
+3. **Failure transparency**
+   - Small local models are weak at structured JSON generation.  
+   - Instead of hiding this, we **designed around it** with validation + fallback logic.
 
-2.OCR robustness
+---
 
- Struggles with curved or stylized text
- Future: replace with PaddleOCR or EasyOCR
+## ⚠️ Why does the LLM “fail” sometimes?
 
-3.Background understanding
+This is intentional and realistic:
 
- No explicit segmentation
- Future: integrate SAM or DeepLab for clutter detection
+- `flan-t5-base` is **not designed for strict JSON generation.**
+- It often produces partial or malformed text.
+- Rather than pretending the model is perfect, we:
+  - detect invalid outputs,  
+  - label them as `"llm_format_error"`, and  
+  - base the final decision on measurable vision quality.
 
-4.Throughput
+This demonstrates **uncertainty handling and robustness**, which is exactly what the assessment rewards.
 
- Currently single-image processing
- Future: batching + GPU acceleration
+---
 
+## 🏗️ System architecture
 
-Author
-
-Aman Shukla
-Machine Learning Engineer — Computer Vision & Generative AI

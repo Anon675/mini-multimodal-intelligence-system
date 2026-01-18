@@ -1,14 +1,14 @@
 {
-  "image_quality_score": 0.6321157953717493,
+  "image_quality_score": 0.2197051692831217,
   "issues_detected": [
-    "llm_format_error"
+    "low_image_quality"
   ],
   "detected_objects": [
     "laptop",
     "cup"
   ],
   "text_detected": [],
-  "llm_reasoning_summary": "LLM output was malformed. Decision based solely on vision quality metrics.",
-  "final_verdict": "Suitable",
-  "confidence": 0.25
+  "llm_reasoning_summary": "Decision based on structured vision signals (object presence + image quality).",
+  "final_verdict": "Not suitable",
+  "confidence": 0.42
 }

@@ -1,64 +1,46 @@
 import os
 from pathlib import Path
 
-# -----------------------------
+# ---------------------------------------------------------
 # PROJECT ROOT
-# -----------------------------
+# ---------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# -----------------------------
-# DATA PATHS
-# -----------------------------
-INPUT_DIR = BASE_DIR / "data" / "inputs"
-OUTPUT_DIR = BASE_DIR / "data" / "outputs"
+# ---------------------------------------------------------
+# LOGGING
+# ---------------------------------------------------------
+LOG_LEVEL = "INFO"
 
-# Ensure output directory exists at runtime
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+# ---------------------------------------------------------
+# VISION MODELS
+# ---------------------------------------------------------
 
-# -----------------------------
-# VISION MODEL SETTINGS
-# -----------------------------
+# Stronger detector (your deliberate design choice)
+YOLO_MODEL_NAME = "yolov8m.pt"
 
-# YOLO object detection
-YOLO_MODEL_NAME = "yolov8n.pt"   # small, fast, reliable baseline
-YOLO_CONF_THRESHOLD = 0.25       # balance between precision and recall
+# Confidence gate (Fix-1)
+YOLO_CONFIDENCE_THRESHOLD = 0.45
+
+# IoU threshold for Non-Max Suppression (required by your detector)
 YOLO_IOU_THRESHOLD = 0.45
 
-# CLIP image embedding model (local)
+# Backward-compatible alias (because your detector imports this name)
+YOLO_CONF_THRESHOLD = YOLO_CONFIDENCE_THRESHOLD
+
+# Device control used by yolo_detector.py
+USE_GPU_IF_AVAILABLE = False
+
 CLIP_MODEL_NAME = "openai/clip-vit-base-patch32"
 
-# OCR settings
-TESSERACT_LANG = "eng"
-
-# -----------------------------
-# IMAGE QUALITY SETTINGS
-# -----------------------------
-
-# Blur detection
-BLUR_VARIANCE_THRESHOLD = 100.0   # lower = blurrier
-
-# Brightness range (normalized 0-1)
-MIN_ACCEPTABLE_BRIGHTNESS = 0.25
-MAX_ACCEPTABLE_BRIGHTNESS = 0.85
-
-# Contrast threshold
-MIN_CONTRAST = 0.20
-
-# -----------------------------
-# LOCAL LLM SETTINGS (NO OPENAI)
-# -----------------------------
-
-# We will use a lightweight local reasoning model
+# ---------------------------------------------------------
+# LOCAL LLM
+# ---------------------------------------------------------
 LOCAL_LLM_MODEL = "google/flan-t5-base"
 
-# Generation parameters
-LLM_MAX_TOKENS = 256
-LLM_TEMPERATURE = 0.2  # low randomness = more reliable output
-
-# -----------------------------
-# OUTPUT SCHEMA KEYS
-# -----------------------------
-OUTPUT_KEYS = [
+# ---------------------------------------------------------
+# OUTPUT SCHEMA (single source of truth)
+# ---------------------------------------------------------
+OUTPUT_KEYS = {
     "image_quality_score",
     "issues_detected",
     "detected_objects",
@@ -66,21 +48,25 @@ OUTPUT_KEYS = [
     "llm_reasoning_summary",
     "final_verdict",
     "confidence",
-]
+}
 
-# -----------------------------
-# SCALABILITY DEFAULTS
-# -----------------------------
-BATCH_SIZE = 1           # keep simple for this task
-USE_GPU_IF_AVAILABLE = True
+# ---------------------------------------------------------
+# OCR SETTINGS
+# ---------------------------------------------------------
+TESSERACT_LANG = "eng"
+TESSERACT_TIMEOUT_SEC = 10
 
-# -----------------------------
-# LOGGING
-# -----------------------------
-LOG_LEVEL = "INFO"
+# ---------------------------------------------------------
+# IMAGE QUALITY DEFAULTS
+# ---------------------------------------------------------
+DEFAULT_BLUR_THRESHOLD = 100.0
+DEFAULT_BRIGHTNESS_MIN = 50
+DEFAULT_BRIGHTNESS_MAX = 200
 
-# -----------------------------
-# HELPER FLAGS
-# -----------------------------
-ALLOW_CACHING = False     # optional future improvement
-ENABLE_EXPLAINABILITY = True
+# ---------------------------------------------------------
+# HUGGINGFACE CACHE
+# ---------------------------------------------------------
+HF_CACHE_DIR = os.getenv(
+    "HF_HOME",
+    str(BASE_DIR / ".hf_cache")
+)

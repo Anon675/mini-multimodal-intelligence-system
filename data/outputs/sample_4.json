@@ -1,14 +1,14 @@
 {
-  "image_quality_score": 0.8805508416581703,
+  "image_quality_score": 0.3106445293087749,
   "issues_detected": [
-    "llm_format_error"
+    "low_image_quality"
   ],
   "detected_objects": [
-    "cell phone",
-    "person"
+    "person",
+    "cell phone"
   ],
   "text_detected": [],
-  "llm_reasoning_summary": "LLM output was malformed. Decision based solely on vision quality metrics.",
-  "final_verdict": "Suitable",
-  "confidence": 0.25
+  "llm_reasoning_summary": "Decision based on structured vision signals (object presence + image quality).",
+  "final_verdict": "Not suitable",
+  "confidence": 0.511
 }
