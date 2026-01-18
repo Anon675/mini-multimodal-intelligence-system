@@ -30,79 +30,76 @@ For each input image, the pipeline:
 7. Validates the LLM’s JSON output strictly  
 8. Produces a final structured verdict
 
-### Final JSON output example
-
 
 🧠 Core design principles (why this is not a toy project)
 1) Vision-first intelligence
-The system makes real ML judgments before calling any LLM.
+ -The system makes real ML judgments before calling any LLM.
+ -This avoids the common failure mode where people:
 
-This avoids the common failure mode where people:
+   “Just send the image to GPT and hope.”
 
-“Just send the image to GPT and hope.”
-
-Here, the LLM only reasons over measured signals, not pixels.
+      Here, the LLM only reasons over measured signals, not pixels.
 
 2) LLM is a reasoning assistant, not a brain
 The local LLM:
 
-Never sees the image
+-Never sees the image
 
-Never replaces vision models
+-Never replaces vision models
 
-Only interprets structured evidence
+-Only interprets structured evidence
 
-This matches how production systems are actually built.
+-This matches how production systems are actually built.
 
 3) Lightweight evaluation & reliability layer
-Instead of trusting the LLM blindly, the system enforces:
+-Instead of trusting the LLM blindly, the system enforces:
 
-Required keys
+-Required keys
 
-Correct data types
+-Correct data types
 
-Valid numeric ranges
+-Valid numeric ranges
 
-Allowed verdict values
+-Allowed verdict values
 
-If the LLM returns bad JSON → the system:
+-If the LLM returns bad JSON → the system:
 
-Logs the failure
+-Logs the failure
 
-Flags "llm_format_error"
+-Flags "llm_format_error"
 
-Falls back to deterministic vision-based judgment
+-Falls back to deterministic vision-based judgment
 
-This is intentional engineering robustness, not a bug.
+-This is intentional engineering robustness, not a bug.
 
 🧩 Why a local LLM (not OpenAI API)?
-This was a deliberate trade-off, not ignorance.
+-This was a deliberate trade-off, not ignorance.
 
 Reason 1 — Budget constraints
-Sending thousands of images to a paid API is expensive and unrealistic for many startups and research labs. A local model keeps costs predictable and controllable.
+-Sending thousands of images to a paid API is expensive and unrealistic for many startups and research labs. A local model keeps costs predictable and controllable.
 
 Reason 2 — Privacy & compliance
-Many companies cannot send images to external cloud APIs due to legal and security policies. A local model is safer and enterprise-friendly.
+-Many companies cannot send images to external cloud APIs due to legal and security policies. A local model is safer and enterprise-friendly.
 
 Reason 3 — System realism
-Real production pipelines often:
+-Real production pipelines often:
 
 Run vision on-device or on-prem
 
-Use local reasoning models
+-Use local reasoning models
 
-Avoid dependence on third-party APIs
+-Avoid dependence on third-party APIs
 
-This project reflects that reality.
+-This project reflects that reality.
 
 Trade-off acknowledged
-A small local LLM is weaker at:
+-A small local LLM is weaker at:
 
-Strict JSON formatting
+-Strict JSON formatting
 
-Complex reasoning
+-Complex reasoning
 
-Instead of pretending this isn’t true, the system detects and handles it explicitly.
+-Instead of pretending this isn’t true, the system detects and handles it explicitly.
 
 
 ▶️ How to run
@@ -142,6 +139,7 @@ Write clean, modular, readable code
 
 Think like an ML engineer, not a chatbot user
 
+### Final JSON output example
 ```json
 {
   "image_quality_score": 0.63,
