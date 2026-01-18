@@ -32,16 +32,7 @@ For each input image, the pipeline:
 
 ### Final JSON output example
 
-```json
-{
-  "image_quality_score": 0.63,
-  "issues_detected": ["llm_format_error"],
-  "detected_objects": ["laptop", "cup"],
-  "text_detected": [],
-  "llm_reasoning_summary": "LLM output was malformed. Decision based solely on vision quality metrics.",
-  "final_verdict": "Suitable",
-  "confidence": 0.25
-}
+
 🧠 Core design principles (why this is not a toy project)
 1) Vision-first intelligence
 The system makes real ML judgments before calling any LLM.
@@ -150,3 +141,14 @@ Handle model uncertainty honestly
 Write clean, modular, readable code
 
 Think like an ML engineer, not a chatbot user
+
+```json
+{
+  "image_quality_score": 0.63,
+  "issues_detected": ["llm_format_error"],
+  "detected_objects": ["laptop", "cup"],
+  "text_detected": [],
+  "llm_reasoning_summary": "LLM output was malformed. Decision based solely on vision quality metrics.",
+  "final_verdict": "Suitable",
+  "confidence": 0.25
+}
