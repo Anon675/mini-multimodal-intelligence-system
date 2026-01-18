@@ -1,0 +1,11 @@
+{
+  "image_quality_score": 1.0,
+  "issues_detected": [],
+  "detected_objects": [
+    "remote"
+  ],
+  "text_detected": [],
+  "llm_reasoning_summary": "Suitable or Not suitable",
+  "final_verdict": "Not suitable",
+  "confidence": 0.5
+}

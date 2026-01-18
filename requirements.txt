@@ -1,0 +1,25 @@
+# Core
+python-dotenv==1.0.1
+
+# Vision & ML
+opencv-python==4.9.0.80
+pillow==10.2.0
+torch==2.1.2
+torchvision==0.16.2
+
+# Detection + OCR
+ultralytics==8.0.227
+pytesseract==0.3.10
+
+# Embeddings
+transformers==4.36.2
+
+
+# Utils
+numpy==1.26.4
+scikit-image==0.22.0
+scikit-learn==1.4.0
+tqdm==4.66.1
+
+sentencepiece==0.1.99
+

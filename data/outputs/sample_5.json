@@ -1,0 +1,12 @@
+{
+  "image_quality_score": 0.6321157953717493,
+  "issues_detected": [],
+  "detected_objects": [
+    "laptop",
+    "cup"
+  ],
+  "text_detected": [],
+  "llm_reasoning_summary": "Suitable or Not suitable",
+  "final_verdict": "Not suitable",
+  "confidence": 0.5
+}

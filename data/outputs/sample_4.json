@@ -1,0 +1,12 @@
+{
+  "image_quality_score": 0.8805508416581703,
+  "issues_detected": [],
+  "detected_objects": [
+    "cell phone",
+    "person"
+  ],
+  "text_detected": [],
+  "llm_reasoning_summary": "[\"issues_detected\": [list of strings, \"llm_reasoning_summary\": \"short paragraph\", \"final_verdict\": \"Suitable\" or \"Not suitable\"]",
+  "final_verdict": "Not suitable",
+  "confidence": 0.5
+}
