@@ -49,7 +49,7 @@ MIN_CONTRAST = 0.20
 # -----------------------------
 
 # We will use a lightweight local reasoning model
-LOCAL_LLM_MODEL = "google/flan-t5-small"
+LOCAL_LLM_MODEL = "google/flan-t5-base"
 
 # Generation parameters
 LLM_MAX_TOKENS = 256

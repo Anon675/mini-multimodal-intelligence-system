@@ -1,12 +1,14 @@
 {
   "image_quality_score": 0.8805508416581703,
-  "issues_detected": [],
+  "issues_detected": [
+    "llm_format_error"
+  ],
   "detected_objects": [
     "cell phone",
     "person"
   ],
   "text_detected": [],
-  "llm_reasoning_summary": "[\"issues_detected\": [list of strings, \"llm_reasoning_summary\": \"short paragraph\", \"final_verdict\": \"Suitable\" or \"Not suitable\"]",
-  "final_verdict": "Not suitable",
-  "confidence": 0.5
+  "llm_reasoning_summary": "LLM output was malformed. Decision based solely on vision quality metrics.",
+  "final_verdict": "Suitable",
+  "confidence": 0.25
 }

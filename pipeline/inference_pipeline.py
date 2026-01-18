@@ -25,7 +25,7 @@ class InferencePipeline:
     """
     End-to-end pipeline that:
     1) Loads image
-    2) Extracts ML features (objects, embeddings, OCR, quality)
+    2) Extracts ML features (objects, OCR, quality, embeddings)
     3) Sends structured signals to local LLM for reasoning
     4) Returns structured JSON output
     """
@@ -81,27 +81,36 @@ class InferencePipeline:
         logger.info("Feature extraction complete.")
         return features
 
-    def _merge_outputs(self, features: Dict[str, Any], llm_output: Dict[str, Any]) -> Dict[str, Any]:
+    def _merge_outputs(
+        self,
+        features: Dict[str, Any],
+        llm_output: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Combine ML signals + LLM reasoning into final structured schema.
         """
 
         result = {
             "image_quality_score": float(features["image_quality_score"]),
-            "issues_detected": list(set(
-                features.get("issues_detected", []) + llm_output.get("issues_detected", [])
-            )),
+            "issues_detected": list(
+                set(llm_output.get("issues_detected", []))
+            ),
             "detected_objects": features["detected_objects"],
             "text_detected": features["text_detected"],
             "llm_reasoning_summary": llm_output.get(
                 "llm_reasoning_summary",
                 "No reasoning available."
             ),
-            "final_verdict": llm_output.get("final_verdict", "Not suitable"),
-            "confidence": float(llm_output.get("confidence", 0.5)),
+            "final_verdict": llm_output.get(
+                "final_verdict",
+                "Not suitable"
+            ),
+            "confidence": float(
+                llm_output.get("confidence", 0.5)
+            ),
         }
 
-        # Ensure output matches required keys
+        # Ensure schema completeness
         for key in OUTPUT_KEYS:
             if key not in result:
                 result[key] = None
@@ -116,11 +125,12 @@ class InferencePipeline:
 
         logger.info(f"Running pipeline on: {image_path}")
 
-        # Step 1: Extract features (ML judgment)
+        # Step 1: Extract features (your real ML work)
         features = self._assemble_features(image_path)
 
         # Step 2: LLM reasoning over structured signals
-        llm_output = self.llm.reason(features)
+        # 🔧 FIXED HERE → use .run(), NOT .reason()
+        llm_output = self.llm.run(features)
 
         # Step 3: Merge into final structured output
         final_result = self._merge_outputs(features, llm_output)
